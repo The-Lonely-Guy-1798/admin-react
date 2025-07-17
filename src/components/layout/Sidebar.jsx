@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Box, Typography, Divider
+  Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Box, Typography, Divider, Avatar
 } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.jsx';
@@ -15,12 +15,12 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import PeopleIcon from '@mui/icons-material/People';
 import CategoryIcon from '@mui/icons-material/Category';
 import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout'; // Import Logout Icon
+import LogoutIcon from '@mui/icons-material/Logout';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const drawerWidth = 240;
 
 const navItems = [
-  // ... (navItems array remains the same)
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Stories', icon: <BookIcon />, path: '/stories' },
   { text: 'Articles', icon: <ArticleIcon />, path: '/articles' },
@@ -31,7 +31,7 @@ const navItems = [
 ];
 
 const Sidebar = () => {
-  const { logout } = useAuth(); // Get the logout function
+  const { logout, user } = useAuth();
 
   return (
     <Drawer
@@ -77,17 +77,34 @@ const Sidebar = () => {
           ))}
         </List>
       </Box>
-      {/* --- LOGOUT BUTTON START --- */}
+      
+      {/* User Profile and Logout Section */}
       <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.12)' }} />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton onClick={logout} sx={{ m: 1, borderRadius: '8px' }}>
-            <ListItemIcon><LogoutIcon /></ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      {/* --- LOGOUT BUTTON END --- */}
+      <Box sx={{ p: 2 }}>
+        {user && (
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+              <AdminPanelSettingsIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
+                {user.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {user.email}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton onClick={logout} sx={{ borderRadius: '8px' }}>
+              <ListItemIcon><LogoutIcon /></ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
     </Drawer>
   );
 };

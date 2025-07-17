@@ -1,47 +1,153 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { 
+  getStories, 
+  createStory, 
+  updateStory, 
+  deleteStory, 
+  getStoryById 
+} from '../firebase/services/storyService.js';
+import toast from 'react-hot-toast';
 
 const StoryContext = createContext();
 
-const initialStories = [
-  { id: 1, title: 'The Last Voyager', abstract: 'A sci-fi epic about the last human exploring the void.', category: 'Original', status: 'Published', chapters: 52, lastUpdated: '2025-07-17' },
-  { id: 2, title: 'Naruto: The Seventh Shadow', abstract: 'A new adventure in the Hidden Leaf.', category: 'Fan-Fiction', status: 'Published', chapters: 150, lastUpdated: '2025-07-16' },
-  { id: 3, title: 'City of Glass and Fire', abstract: 'Magic and mystery in a sprawling metropolis.', category: 'Original', status: 'Draft', chapters: 5, lastUpdated: '2025-07-12' },
-  { id: 4, title: 'Alpha Protocol', abstract: 'A spy thriller with twists and turns.', category: 'Fan-Fiction', status: 'Draft', chapters: 12, lastUpdated: '2025-07-01' },
-  { id: 5, title: 'Zodiac Academy', abstract: 'Students harness the power of the stars.', category: 'Original', status: 'Published', chapters: 88, lastUpdated: '2025-04-20' },
-];
-
 export const StoryProvider = ({ children }) => {
-  const [stories, setStories] = useState(initialStories);
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const addStory = (newStory) => {
-    const storyWithId = { 
-        ...newStory, 
-        id: Date.now(),
-        lastUpdated: new Date().toISOString().slice(0, 10) 
-    };
-    setStories(prevStories => [storyWithId, ...prevStories]);
+  // Load stories from Firebase on component mount
+  useEffect(() => {
+    loadStories();
+  }, []);
+
+  const loadStories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedStories = await getStories();
+      setStories(fetchedStories);
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Failed to load stories: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteStory = (storyId) => {
-    setStories(prevStories => prevStories.filter(story => story.id !== storyId));
+  const addStory = async (newStoryData, coverImageFile = null) => {
+    try {
+      setLoading(true);
+      const createdStory = await createStory(newStoryData, coverImageFile);
+      setStories(prevStories => [createdStory, ...prevStories]);
+      toast.success('Story created successfully!');
+      return createdStory;
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Failed to create story: ${err.message}`);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // The new update function
-  const updateStory = (updatedStory) => {
-    setStories(prevStories => 
-      prevStories.map(story => 
-        story.id === updatedStory.id ? updatedStory : story
-      )
+  const updateStoryById = async (storyId, updateData, coverImageFile = null) => {
+    try {
+      setLoading(true);
+      const updatedStory = await updateStory(storyId, updateData, coverImageFile);
+      setStories(prevStories => 
+        prevStories.map(story => 
+          story.id === storyId ? updatedStory : story
+        )
+      );
+      toast.success('Story updated successfully!');
+      return updatedStory;
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Failed to update story: ${err.message}`);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteStoryById = async (storyId) => {
+    try {
+      setLoading(true);
+      await deleteStory(storyId);
+      setStories(prevStories => prevStories.filter(story => story.id !== storyId));
+      toast.success('Story deleted successfully!');
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Failed to delete story: ${err.message}`);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStoryByIdFromContext = async (storyId) => {
+    try {
+      // First check if story is already in context
+      const existingStory = stories.find(story => story.id === storyId);
+      if (existingStory) {
+        return existingStory;
+      }
+      
+      // If not found, fetch from Firebase
+      const story = await getStoryById(storyId);
+      return story;
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Failed to fetch story: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const getStoriesByStatus = (status) => {
+    return stories.filter(story => story.status === status);
+  };
+
+  const getStoriesByCategory = (category) => {
+    return stories.filter(story => story.category === category);
+  };
+
+  const searchStories = (searchTerm) => {
+    if (!searchTerm) return stories;
+    
+    const searchTermLower = searchTerm.toLowerCase();
+    return stories.filter(story => 
+      story.title.toLowerCase().includes(searchTermLower) ||
+      story.description.toLowerCase().includes(searchTermLower)
     );
   };
 
+  const refreshStories = () => {
+    loadStories();
+  };
+
   return (
-    <StoryContext.Provider value={{ stories, addStory, deleteStory, updateStory }}>
+    <StoryContext.Provider value={{ 
+      stories, 
+      loading,
+      error,
+      addStory, 
+      deleteStory: deleteStoryById, 
+      updateStory: updateStoryById,
+      getStoryById: getStoryByIdFromContext,
+      getStoriesByStatus,
+      getStoriesByCategory,
+      searchStories,
+      refreshStories
+    }}>
       {children}
     </StoryContext.Provider>
   );
 };
 
 export const useStories = () => {
-  return useContext(StoryContext);
+  const context = useContext(StoryContext);
+  if (!context) {
+    throw new Error('useStories must be used within a StoryProvider');
+  }
+  return context;
 };

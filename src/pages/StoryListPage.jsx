@@ -83,14 +83,41 @@ const StoryListPage = () => {
 
   const filteredAndSortedStories = useMemo(() => {
     let storyList = [...stories]; 
-    if (categoryFilter !== 'All') storyList = storyList.filter(story => story.category === categoryFilter);
-    if (statusFilter !== 'All') storyList = storyList.filter(story => story.status === statusFilter);
-    if (searchTerm) storyList = storyList.filter(story => story.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Category filter - handle both old and new format
+    if (categoryFilter !== 'All') {
+      const filterValue = categoryFilter === 'Fan-Fiction' ? 'fan-fiction' : categoryFilter.toLowerCase();
+      storyList = storyList.filter(story => 
+        story.category === filterValue || 
+        story.category === categoryFilter
+      );
+    }
+    
+    // Status filter - handle both old and new format  
+    if (statusFilter !== 'All') {
+      const filterValue = statusFilter.toLowerCase();
+      storyList = storyList.filter(story => 
+        story.status === filterValue || 
+        story.status === statusFilter
+      );
+    }
+    
+    // Search filter
+    if (searchTerm) {
+      storyList = storyList.filter(story => 
+        story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (story.description && story.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
     
     // Map over the stories to add the dynamic chapter count
     const storiesWithChapterCounts = storyList.map(story => ({
         ...story,
-        chapters: allChapters.filter(c => c.storyId === story.id && c.status === 'Published').length
+        chapters: allChapters.filter(c => c.storyId === story.id && c.status === 'published').length,
+        // Ensure proper date formatting for display
+        lastUpdated: story.updatedAt ? 
+          (story.updatedAt instanceof Date ? story.updatedAt.toLocaleDateString() : story.updatedAt) :
+          story.lastUpdated || 'Unknown'
     }));
 
     return stableSort(storiesWithChapterCounts, getComparator(order, orderBy));
@@ -151,8 +178,8 @@ const StoryListPage = () => {
                 <InputLabel>Status</InputLabel>
                 <Select value={statusFilter} label="Status" onChange={handleStatusFilterChange}>
                     <MenuItem value="All">All</MenuItem>
-                    <MenuItem value="Published">Published</MenuItem>
-                    <MenuItem value="Draft">Draft</MenuItem>
+                    <MenuItem value="published">Published</MenuItem>
+                    <MenuItem value="draft">Draft</MenuItem>
                 </Select>
             </FormControl>
           </Box>

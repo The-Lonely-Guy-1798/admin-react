@@ -49,20 +49,31 @@ const AddArticlePage = () => {
     setCoverPreview(URL.createObjectURL(file));
   };
 
-  const handleSave = (status) => {
+  const handleSave = async (status) => {
       if (!title) {
         alert('Title is required!');
         return;
       };
-      const newArticle = {
+      
+      try {
+        const newArticle = {
           title,
           category,
           status, // Use the status passed from the button
-          lastUpdated: new Date().toISOString().slice(0, 10),
           content,
-      };
-      addArticle(newArticle);
-      navigate('/articles');
+          description: content.replace(/<[^>]*>/g, '').substring(0, 200) + '...' // Extract text description
+        };
+        
+        // Get the file from the input
+        const fileInput = document.querySelector('input[type="file"]');
+        const coverImageFile = fileInput?.files[0] || null;
+        
+        await addArticle(newArticle, coverImageFile);
+        navigate('/articles');
+      } catch (error) {
+        console.error('Error creating article:', error);
+        alert('Failed to create article. Please try again.');
+      }
   };
 
   return (

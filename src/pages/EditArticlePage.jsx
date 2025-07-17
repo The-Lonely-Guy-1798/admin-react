@@ -9,6 +9,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -19,7 +20,7 @@ import { useArticles } from '../contexts/ArticleContext.jsx';
 const EditArticlePage = () => {
   const navigate = useNavigate();
   const { articleId } = useParams();
-  const { articles, updateArticle } = useArticles();
+  const { articles, updateArticle, loading, getArticleById } = useArticles();
 
   // State for form fields
   const [title, setTitle] = useState('');
@@ -33,14 +34,29 @@ const EditArticlePage = () => {
 
   // Effect to load article data into state
   useEffect(() => {
-    const article = articles.find(a => a.id === parseInt(articleId));
-    if (article) {
-      setCurrentArticle(article);
-      setTitle(article.title);
-      setCategory(article.category);
-      setContent(article.content);
-    }
-  }, [articleId, articles]);
+    const loadArticle = async () => {
+      try {
+        // First try to find in context
+        let article = articles.find(a => a.id === articleId);
+        
+        // If not found in context, fetch from Firebase
+        if (!article && articleId) {
+          article = await getArticleById(articleId);
+        }
+        
+        if (article) {
+          setCurrentArticle(article);
+          setTitle(article.title);
+          setCategory(article.category);
+          setContent(article.content || '');
+        }
+      } catch (error) {
+        console.error('Error loading article:', error);
+      }
+    };
+
+    loadArticle();
+  }, [articleId, articles, getArticleById]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -61,21 +77,36 @@ const EditArticlePage = () => {
     setCoverPreview(URL.createObjectURL(file));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title || !currentArticle) return;
-    const updatedArticle = {
-      ...currentArticle,
-      title,
-      category,
-      content,
-      lastUpdated: new Date().toISOString().slice(0, 10),
-    };
-    updateArticle(updatedArticle);
-    navigate('/articles');
+    
+    try {
+      const updatedArticle = {
+        title,
+        category,
+        content,
+        description: content.replace(/<[^>]*>/g, '').substring(0, 200) + '...' // Extract text description
+      };
+      
+      // Get the file from the input
+      const fileInput = document.querySelector('input[type="file"]');
+      const coverImageFile = fileInput?.files[0] || null;
+      
+      await updateArticle(currentArticle.id, updatedArticle, coverImageFile);
+      navigate('/articles');
+    } catch (error) {
+      console.error('Error updating article:', error);
+      alert('Failed to update article. Please try again.');
+    }
   };
   
-  if (!currentArticle) {
-    return <Typography>Loading article...</Typography>
+  if (loading || !currentArticle) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px', gap: 2 }}>
+        <CircularProgress size={60} />
+        <Typography>Loading article...</Typography>
+      </Box>
+    );
   }
 
   return (

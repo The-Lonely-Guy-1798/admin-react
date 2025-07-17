@@ -16,7 +16,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  CircularProgress
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ContentTable from '../components/common/ContentTable';
@@ -50,7 +51,7 @@ function stableSort(array, comparator) {
 
 const ArticleListPage = () => {
   const navigate = useNavigate();
-  const { articles, deleteArticle } = useArticles();
+  const { articles, deleteArticle, loading } = useArticles();
 
   const [activeTab, setActiveTab] = useState(0);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -117,6 +118,16 @@ const ArticleListPage = () => {
       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [articles, activeTab, statusFilter, searchTerm, order, orderBy, page, rowsPerPage]);
 
+  // Show loading state
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px', gap: 2 }}>
+        <CircularProgress size={60} />
+        <Typography>Loading articles...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -125,6 +136,8 @@ const ArticleListPage = () => {
           Add New Article
         </Button>
       </Box>
+
+
 
       <Paper sx={{ p: 2, width: '100%' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
@@ -143,8 +156,8 @@ const ArticleListPage = () => {
                         onChange={handleStatusFilterChange}
                     >
                         <MenuItem value="All">All Statuses</MenuItem>
-                        <MenuItem value="Published">Published</MenuItem>
-                        <MenuItem value="Draft">Draft</MenuItem>
+                        <MenuItem value="published">Published</MenuItem>
+                        <MenuItem value="draft">Draft</MenuItem>
                     </Select>
                 </FormControl>
             </Box>

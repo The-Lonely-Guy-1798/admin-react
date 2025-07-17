@@ -26,8 +26,12 @@ const EditArticlePage = () => {
   const [category, setCategory] = useState('');
   const [content, setContent] = useState('');
   const [currentArticle, setCurrentArticle] = useState(null);
+  
+  // State for image preview and validation
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [fileError, setFileError] = useState('');
 
-  // Effect to load article data into state when the page loads
+  // Effect to load article data into state
   useEffect(() => {
     const article = articles.find(a => a.id === parseInt(articleId));
     if (article) {
@@ -38,6 +42,25 @@ const EditArticlePage = () => {
     }
   }, [articleId, articles]);
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      setCoverPreview(null);
+      setFileError('');
+      return;
+    }
+
+    if (file.size > 300 * 1024) {
+      setFileError('File is too large. Maximum size is 300KB.');
+      setCoverPreview(null);
+      event.target.value = null;
+      return;
+    }
+
+    setFileError('');
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
   const handleSave = () => {
     if (!title || !currentArticle) return;
     const updatedArticle = {
@@ -45,7 +68,7 @@ const EditArticlePage = () => {
       title,
       category,
       content,
-      lastUpdated: 'Just now'
+      lastUpdated: new Date().toISOString().slice(0, 10),
     };
     updateArticle(updatedArticle);
     navigate('/articles');
@@ -82,9 +105,27 @@ const EditArticlePage = () => {
             </FormControl>
             <Button component="label" variant="outlined">
                 Upload Cover Image
-                <input type="file" hidden accept="image/*" />
+                <input type="file" hidden accept="image/*" onChange={handleFileChange} />
             </Button>
           </Box>
+           {fileError && <Typography color="error" variant="caption" sx={{mt: -2}}>{fileError}</Typography>}
+           {coverPreview && (
+                <Box sx={{ mt: -1 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Image Preview:</Typography>
+                    <Box 
+                        component="img"
+                        src={coverPreview}
+                        alt="Cover preview"
+                        sx={{
+                            width: '150px',
+                            height: 'auto',
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    />
+                </Box>
+            )}
           <Box>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>Article Content</Typography>
             <CKEditor

@@ -12,12 +12,13 @@ import AnalyticsPage from '../pages/AnalyticsPage.jsx';
 import UserManagementPage from '../pages/UserManagementPage.jsx';
 import CategoryManagementPage from '../pages/CategoryManagementPage.jsx';
 import SettingsPage from '../pages/SettingsPage.jsx';
-import AddStoryPage from '../pages/AddStoryPage.jsx'; 
+import AddStoryPage from '../pages/AddStoryPage.jsx';
 import EditStoryPage from '../pages/EditStoryPage.jsx';
-import CreateChapterPage from '../pages/CreateChapterPage.jsx'; // 1. Import the missing page
+import CreateChapterPage from '../pages/CreateChapterPage.jsx';
 import EditArticlePage from '../pages/EditArticlePage.jsx';
 import AddArticlePage from '../pages/AddArticlePage.jsx';
 import UserDetailPage from '../pages/UserDetailPage.jsx';
+import EditChapterPage from '../pages/EditChapterPage.jsx'; // Import the new page
 
 const AppRouter = () => {
   return (
@@ -39,8 +40,8 @@ const AppRouter = () => {
         <Route path="stories" element={<StoryListPage />} />
         <Route path="stories/add" element={<AddStoryPage />} />
         <Route path="stories/edit/:storyId" element={<EditStoryPage />} />
-        {/* 2. Add the missing route here */}
         <Route path="stories/edit/:storyId/create-chapter" element={<CreateChapterPage />} />
+        <Route path="stories/edit/:storyId/chapters/:chapterId" element={<EditChapterPage />} />
         <Route path="articles" element={<ArticleListPage />} />
         <Route path="articles/add" element={<AddArticlePage />} />
         <Route path="articles/edit/:articleId" element={<EditArticlePage />} />

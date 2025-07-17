@@ -15,8 +15,8 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-// 1. Add onDelete to the props
-const ContentTable = ({ headers, data, onEdit, onDelete, order, orderBy, onRequestSort }) => {
+// Add onRowClick to the props
+const ContentTable = ({ headers, data, onEdit, onDelete, onRowClick, order, orderBy, onRequestSort }) => {
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
@@ -49,7 +49,12 @@ const ContentTable = ({ headers, data, onEdit, onDelete, order, orderBy, onReque
         </TableHead>
         <TableBody>
           {data.map((item) => (
-            <TableRow key={item.id} sx={{ '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)' } }}>
+            <TableRow 
+                key={item.id} 
+                hover 
+                onClick={() => onRowClick && onRowClick(item.id)}
+                sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
+            >
               <TableCell>
                 <Box sx={{
                     width: 40,
@@ -78,11 +83,18 @@ const ContentTable = ({ headers, data, onEdit, onDelete, order, orderBy, onReque
               {item.chapters !== undefined && <TableCell>{item.chapters}</TableCell>}
               <TableCell>{item.lastUpdated}</TableCell>
               <TableCell align="right">
-                <IconButton size="small" color="info" onClick={() => onEdit && onEdit(item.id)}>
+                <IconButton 
+                    size="small" 
+                    color="info" 
+                    onClick={(e) => { e.stopPropagation(); onEdit && onEdit(item.id); }}
+                >
                     <EditIcon />
                 </IconButton>
-                {/* 2. Add the onClick handler to the delete button */}
-                <IconButton size="small" color="error" onClick={() => onDelete && onDelete(item.id)}>
+                <IconButton 
+                    size="small" 
+                    color="error" 
+                    onClick={(e) => { e.stopPropagation(); onDelete && onDelete(item.id); }}
+                >
                     <DeleteIcon />
                 </IconButton>
               </TableCell>

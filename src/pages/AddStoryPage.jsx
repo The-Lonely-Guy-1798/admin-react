@@ -19,10 +19,35 @@ const AddStoryPage = () => {
   const navigate = useNavigate();
   const { addStory } = useStories();
 
+  // State for form fields
   const [title, setTitle] = useState('');
   const [synopsis, setSynopsis] = useState('');
   const [category, setCategory] = useState('Original');
   const [status, setStatus] = useState('Draft');
+  
+  // State for image preview and validation
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [fileError, setFileError] = useState('');
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      setCoverPreview(null);
+      setFileError('');
+      return;
+    }
+
+    // Validation: Check file size (300KB = 300 * 1024 bytes)
+    if (file.size > 300 * 1024) {
+      setFileError('File is too large. Maximum size is 300KB.');
+      setCoverPreview(null);
+      return;
+    }
+
+    // Create a URL for image preview
+    setFileError('');
+    setCoverPreview(URL.createObjectURL(file));
+  };
 
   const handleSave = () => {
     if (!title) {
@@ -35,7 +60,7 @@ const AddStoryPage = () => {
         category,
         status,
         chapters: 0,
-        lastUpdated: 'Just now',
+        lastUpdated: new Date().toISOString().slice(0, 10),
     };
     addStory(newStory);
     navigate('/stories');
@@ -97,12 +122,36 @@ const AddStoryPage = () => {
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>Cover Image</Typography>
                 <Button component="label" variant="outlined">
                     Choose File
-                    <input type="file" hidden accept="image/*" />
+                    <input type="file" hidden accept="image/*" onChange={handleFileChange} />
                 </Button>
+                {fileError && <Typography color="error" sx={{mt: 1}}>{fileError}</Typography>}
             </Box>
+            
+            {/* Image Preview */}
+            {coverPreview && (
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Image Preview:</Typography>
+                    <Box 
+                        component="img"
+                        src={coverPreview}
+                        alt="Cover preview"
+                        sx={{
+                            width: '150px',
+                            height: 'auto',
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    />
+                </Box>
+            )}
+
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
                 <Button variant="text" onClick={() => navigate('/stories')}>Cancel</Button>
-                <Button variant="contained" size="large" onClick={handleSave}>Save Story</Button>
+                <Button variant="contained" size="large" onClick={handleSave}>
+                  {/* Dynamic Button Text */}
+                  {status === 'Draft' ? 'Save Story' : 'Publish Story'}
+                </Button>
             </Box>
           </Box>
         </Paper>

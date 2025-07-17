@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Typography,
   Box,
@@ -22,6 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ContentTable from '../components/common/ContentTable';
 import { useNavigate } from 'react-router-dom';
 import { useStories } from '../contexts/StoryContext.jsx';
+import { useChapters } from '../contexts/ChapterContext.jsx';
 
 const storyHeaders = [
     { id: 'cover', label: 'Cover' },
@@ -29,7 +30,7 @@ const storyHeaders = [
     { id: 'category', label: 'Category', sortable: true },
     { id: 'status', label: 'Status', sortable: true },
     { id: 'chapters', label: 'Chapters', sortable: true },
-    { id: 'lastUpdated', label: 'Last Updated' },
+    { id: 'lastUpdated', label: 'Last Updated', sortable: true },
     { id: 'actions', label: 'Actions', align: 'right' },
 ];
 
@@ -44,20 +45,22 @@ function stableSort(array, comparator) {
 }
 
 function getComparator(order, orderBy) {
+  const isNumber = orderBy === 'chapters';
   return order === 'desc'
-    ? (a, b) => (b[orderBy] < a[orderBy] ? -1 : 1)
-    : (a, b) => (a[orderBy] < b[orderBy] ? -1 : 1);
+    ? (a, b) => (isNumber ? b[orderBy] - a[orderBy] : (b[orderBy] < a[orderBy] ? -1 : 1))
+    : (a, b) => (isNumber ? a[orderBy] - b[orderBy] : (a[orderBy] < b[orderBy] ? -1 : 1));
 }
 
 const StoryListPage = () => {
   const navigate = useNavigate();
   const { stories, deleteStory } = useStories();
+  const { chapters: allChapters } = useChapters();
 
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('title');
+  const [order, setOrder] = useState('desc');
+  const [orderBy, setOrderBy] = useState('lastUpdated');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -84,8 +87,14 @@ const StoryListPage = () => {
     if (statusFilter !== 'All') storyList = storyList.filter(story => story.status === statusFilter);
     if (searchTerm) storyList = storyList.filter(story => story.title.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    return stableSort(storyList, getComparator(order, orderBy));
-  }, [stories, categoryFilter, statusFilter, searchTerm, order, orderBy]);
+    // Map over the stories to add the dynamic chapter count
+    const storiesWithChapterCounts = storyList.map(story => ({
+        ...story,
+        chapters: allChapters.filter(c => c.storyId === story.id && c.status === 'Published').length
+    }));
+
+    return stableSort(storiesWithChapterCounts, getComparator(order, orderBy));
+  }, [stories, allChapters, categoryFilter, statusFilter, searchTerm, order, orderBy]);
 
   const visibleRows = useMemo(() => 
     filteredAndSortedStories.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
@@ -141,7 +150,7 @@ const StoryListPage = () => {
             <FormControl size="small" sx={{minWidth: 150}}>
                 <InputLabel>Status</InputLabel>
                 <Select value={statusFilter} label="Status" onChange={handleStatusFilterChange}>
-                    <MenuItem value="All">All Statuses</MenuItem>
+                    <MenuItem value="All">All</MenuItem>
                     <MenuItem value="Published">Published</MenuItem>
                     <MenuItem value="Draft">Draft</MenuItem>
                 </Select>
@@ -151,7 +160,8 @@ const StoryListPage = () => {
         </Box>
         <ContentTable 
             headers={storyHeaders} 
-            data={visibleRows} 
+            data={visibleRows}
+            onRowClick={(id) => navigate(`/stories/edit/${id}`)}
             onEdit={(id) => navigate(`/stories/edit/${id}`)}
             onDelete={handleDeleteClick}
             order={order}

@@ -53,7 +53,7 @@ const ArticleListPage = () => {
   const { articles, deleteArticle } = useArticles();
 
   const [activeTab, setActiveTab] = useState(0);
-  const [statusFilter, setStatusFilter] = useState('All'); // State for new filter
+  const [statusFilter, setStatusFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('title');
@@ -106,7 +106,6 @@ const ArticleListPage = () => {
     if (categoryFilter !== 'All') {
         articleList = articleList.filter(article => article.category === categoryFilter);
     }
-    // Add status filter logic
     if (statusFilter !== 'All') {
         articleList = articleList.filter(article => article.status === statusFilter);
     }
@@ -136,7 +135,6 @@ const ArticleListPage = () => {
                     <Tab label="Entertainment" />
                     <Tab label="Sports" />
                 </Tabs>
-                {/* Add the status filter dropdown */}
                 <FormControl size="small" sx={{minWidth: 150}}>
                     <InputLabel>Status</InputLabel>
                     <Select
@@ -155,6 +153,7 @@ const ArticleListPage = () => {
         <ContentTable 
             headers={articleHeaders} 
             data={visibleRows} 
+            onRowClick={(id) => navigate(`/articles/edit/${id}`)} // Add this line
             onEdit={(id) => navigate(`/articles/edit/${id}`)}
             onDelete={handleDeleteClick}
             order={order}

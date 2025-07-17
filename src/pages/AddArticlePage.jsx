@@ -9,6 +9,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Grid
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
@@ -23,14 +24,41 @@ const AddArticlePage = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Entertainment');
   const [content, setContent] = useState('<p>Start writing your article here...</p>');
+  
+  // State for image preview and validation
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [fileError, setFileError] = useState('');
 
-  const handleSave = () => {
-      if (!title) return;
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      setCoverPreview(null);
+      setFileError('');
+      return;
+    }
+
+    // Validation: Check file size (300KB = 300 * 1024 bytes)
+    if (file.size > 300 * 1024) {
+      setFileError('File is too large. Maximum size is 300KB.');
+      setCoverPreview(null);
+      event.target.value = null; // Clear the file input
+      return;
+    }
+
+    setFileError('');
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleSave = (status) => {
+      if (!title) {
+        alert('Title is required!');
+        return;
+      };
       const newArticle = {
           title,
           category,
-          status: 'Published', // Defaulting to published on save
-          lastUpdated: 'Just now',
+          status, // Use the status passed from the button
+          lastUpdated: new Date().toISOString().slice(0, 10),
           content,
       };
       addArticle(newArticle);
@@ -64,9 +92,27 @@ const AddArticlePage = () => {
             </FormControl>
             <Button component="label" variant="outlined">
                 Upload Cover Image
-                <input type="file" hidden accept="image/*" />
+                <input type="file" hidden accept="image/*" onChange={handleFileChange} />
             </Button>
           </Box>
+          {fileError && <Typography color="error" variant="caption">{fileError}</Typography>}
+          {coverPreview && (
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Image Preview:</Typography>
+                    <Box 
+                        component="img"
+                        src={coverPreview}
+                        alt="Cover preview"
+                        sx={{
+                            width: '150px',
+                            height: 'auto',
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    />
+                </Box>
+            )}
           <Box>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>Article Content</Typography>
             <CKEditor
@@ -77,7 +123,8 @@ const AddArticlePage = () => {
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
             <Button variant="text" onClick={() => navigate('/articles')}>Cancel</Button>
-            <Button variant="contained" size="large" onClick={handleSave}>Publish Article</Button>
+            <Button variant="outlined" size="large" onClick={() => handleSave('Draft')}>Save as Draft</Button>
+            <Button variant="contained" size="large" onClick={() => handleSave('Published')}>Publish Article</Button>
           </Box>
         </Box>
       </Paper>

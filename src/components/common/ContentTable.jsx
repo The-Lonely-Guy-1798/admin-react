@@ -75,7 +75,7 @@ const ContentTable = ({ headers, data, onEdit, onDelete, onRowClick, order, orde
               <TableCell>
                 <Chip 
                   label={item.status} 
-                  color={item.status === 'Published' ? 'success' : 'warning'}
+                  color={item.status?.toLowerCase() === 'published' ? 'success' : 'warning'}
                   size="small"
                   variant="outlined"
                 />

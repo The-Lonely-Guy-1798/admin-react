@@ -77,7 +77,7 @@ const EditArticlePage = () => {
     setCoverPreview(URL.createObjectURL(file));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (status = null) => {
     if (!title || !currentArticle) return;
     
     try {
@@ -85,6 +85,7 @@ const EditArticlePage = () => {
         title,
         category,
         content,
+        status: status || currentArticle.status, // Use provided status or keep current status
         description: content.replace(/<[^>]*>/g, '').substring(0, 200) + '...' // Extract text description
       };
       
@@ -167,7 +168,20 @@ const EditArticlePage = () => {
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
             <Button variant="text" onClick={() => navigate('/articles')}>Cancel</Button>
-            <Button variant="contained" size="large" onClick={handleSave}>Save Changes</Button>
+            {currentArticle.status?.toLowerCase() === 'draft' ? (
+              <>
+                <Button variant="outlined" size="large" onClick={() => handleSave('draft')}>
+                  Save Changes
+                </Button>
+                <Button variant="contained" size="large" onClick={() => handleSave('published')}>
+                  Publish Article
+                </Button>
+              </>
+            ) : (
+              <Button variant="contained" size="large" onClick={() => handleSave()}>
+                Save Changes
+              </Button>
+            )}
           </Box>
         </Box>
       </Paper>

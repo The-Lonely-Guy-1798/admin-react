@@ -205,6 +205,31 @@ export const updateChapter = async (chapterId, updateData) => {
 };
 
 /**
+ * Delete all chapters for a story
+ * @param {string} storyId - Story ID
+ * @returns {Promise<void>}
+ */
+export const deleteChaptersByStoryId = async (storyId) => {
+  try {
+    // Get all chapters for this story
+    const chapters = await getChaptersByStory(storyId);
+    
+    // Delete each chapter
+    const deletePromises = chapters.map(chapter => {
+      const docRef = doc(db, COLLECTION_NAME, chapter.id);
+      return deleteDoc(docRef);
+    });
+    
+    await Promise.all(deletePromises);
+    
+    console.log(`Deleted ${chapters.length} chapters for story ${storyId}`);
+  } catch (error) {
+    console.error('Error deleting chapters for story:', error);
+    throw new Error(`Failed to delete chapters for story: ${error.message}`);
+  }
+};
+
+/**
  * Delete a chapter
  * @param {string} chapterId - Chapter ID
  * @returns {Promise<void>}

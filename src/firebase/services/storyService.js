@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config.js';
 import { uploadImageToCloudinary } from '../utils/cloudinaryUtils.js';
+import { deleteChaptersByStoryId } from './chapterService.js';
 
 const COLLECTION_NAME = 'stories';
 
@@ -176,14 +177,20 @@ export const updateStory = async (storyId, updateData, coverImageFile = null) =>
 };
 
 /**
- * Delete a story
+ * Delete a story and all its related chapters
  * @param {string} storyId - Story ID
  * @returns {Promise<void>}
  */
 export const deleteStory = async (storyId) => {
   try {
+    // Delete all related chapters first
+    await deleteChaptersByStoryId(storyId);
+    
+    // Then delete the story
     const docRef = doc(db, COLLECTION_NAME, storyId);
     await deleteDoc(docRef);
+    
+    console.log(`Successfully deleted story ${storyId} and all its chapters`);
   } catch (error) {
     console.error('Error deleting story:', error);
     throw new Error(`Failed to delete story: ${error.message}`);

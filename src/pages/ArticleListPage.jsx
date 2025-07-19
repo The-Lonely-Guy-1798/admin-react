@@ -105,16 +105,33 @@ const ArticleListPage = () => {
 
     let articleList = [...articles];
     if (categoryFilter !== 'All') {
-        articleList = articleList.filter(article => article.category === categoryFilter);
+        articleList = articleList.filter(article => {
+          const articleCategory = article.category || '';
+          return articleCategory === categoryFilter;
+        });
     }
     if (statusFilter !== 'All') {
-        articleList = articleList.filter(article => article.status === statusFilter);
+        articleList = articleList.filter(article => {
+          const articleStatus = article.status?.toLowerCase() || '';
+          const filterValue = statusFilter.toLowerCase();
+          return articleStatus === filterValue;
+        });
     }
     if (searchTerm) {
         articleList = articleList.filter(article => article.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }
     
-    return stableSort(articleList, getComparator(order, orderBy))
+    // Add proper lastUpdated formatting
+    const articlesWithFormatting = articleList.map(article => ({
+      ...article,
+      lastUpdated: article.updatedAt ? 
+        (article.updatedAt instanceof Date ? article.updatedAt.toLocaleDateString() : 
+         typeof article.updatedAt === 'string' ? article.updatedAt : 
+         new Date(article.updatedAt).toLocaleDateString()) :
+        article.lastUpdated || 'Unknown'
+    }));
+    
+    return stableSort(articlesWithFormatting, getComparator(order, orderBy))
       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   }, [articles, activeTab, statusFilter, searchTerm, order, orderBy, page, rowsPerPage]);
 

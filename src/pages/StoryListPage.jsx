@@ -87,19 +87,19 @@ const StoryListPage = () => {
     // Category filter - handle both old and new format
     if (categoryFilter !== 'All') {
       const filterValue = categoryFilter === 'Fan-Fiction' ? 'fan-fiction' : categoryFilter.toLowerCase();
-      storyList = storyList.filter(story => 
-        story.category === filterValue || 
-        story.category === categoryFilter
-      );
+      storyList = storyList.filter(story => {
+        const storyCategory = story.category?.toLowerCase() || '';
+        return storyCategory === filterValue || storyCategory === categoryFilter.toLowerCase();
+      });
     }
     
     // Status filter - handle both old and new format  
     if (statusFilter !== 'All') {
-      const filterValue = statusFilter.toLowerCase();
-      storyList = storyList.filter(story => 
-        story.status === filterValue || 
-        story.status === statusFilter
-      );
+      storyList = storyList.filter(story => {
+        const storyStatus = story.status?.toLowerCase() || '';
+        const filterValue = statusFilter.toLowerCase();
+        return storyStatus === filterValue;
+      });
     }
     
     // Search filter
@@ -116,7 +116,9 @@ const StoryListPage = () => {
         chapters: allChapters.filter(c => c.storyId === story.id && c.status === 'published').length,
         // Ensure proper date formatting for display
         lastUpdated: story.updatedAt ? 
-          (story.updatedAt instanceof Date ? story.updatedAt.toLocaleDateString() : story.updatedAt) :
+          (story.updatedAt instanceof Date ? story.updatedAt.toLocaleDateString() : 
+           typeof story.updatedAt === 'string' ? story.updatedAt : 
+           new Date(story.updatedAt).toLocaleDateString()) :
           story.lastUpdated || 'Unknown'
     }));
 

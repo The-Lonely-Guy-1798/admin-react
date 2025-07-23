@@ -99,6 +99,7 @@ const AddArticlePage = () => {
                 <MenuItem value="Finance & Crypto">Finance & Crypto</MenuItem>
                 <MenuItem value="Entertainment">Entertainment</MenuItem>
                 <MenuItem value="Sports">Sports</MenuItem>
+                <MenuItem value="World">World</MenuItem>
               </Select>
             </FormControl>
             <Button component="label" variant="outlined">

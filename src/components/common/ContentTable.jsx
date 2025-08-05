@@ -66,22 +66,22 @@ const ContentTable = ({ headers, data, onEdit, onDelete, onRowClick, order, orde
                     justifyContent: 'center'
                 }}>
                     <Typography variant="h6" sx={{color: 'white', fontWeight: 'bold'}}>
-                        {item.title.charAt(0).toUpperCase()}
+                        {item.title && item.title.length > 0 ? item.title.charAt(0).toUpperCase() : '?'}
                     </Typography>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontWeight: '500' }}>{item.title}</TableCell>
-              <TableCell>{item.category}</TableCell>
+              <TableCell sx={{ fontWeight: '500' }}>{item.title || 'Untitled'}</TableCell>
+              <TableCell>{item.category || 'Uncategorized'}</TableCell>
               <TableCell>
                 <Chip 
-                  label={item.status} 
-                  color={item.status?.toLowerCase() === 'published' ? 'success' : 'warning'}
+                  label={item.status || 'draft'} 
+                  color={(item.status || 'draft')?.toLowerCase() === 'published' ? 'success' : 'warning'}
                   size="small"
                   variant="outlined"
                 />
               </TableCell>
               {item.chapters !== undefined && <TableCell>{item.chapters}</TableCell>}
-              <TableCell>{item.lastUpdated}</TableCell>
+              <TableCell>{item.lastUpdated || 'Unknown'}</TableCell>
               <TableCell align="right">
                 <IconButton 
                     size="small" 
